@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>R & G Substitution Race</title>
+
+<style>
+body{
+  font-family:Arial,sans-serif;
+  background:#eef2ff;
+  text-align:center;
+  padding:20px;
+}
+.card{
+  max-width:1150px;
+  margin:auto;
+  background:white;
+  padding:25px;
+  border-radius:20px;
+  box-shadow:0 0 20px rgba(0,0,0,.15);
+}
+h1{color:#1e3a8a;}
+input,button{
+  padding:10px 14px;
+  margin:5px;
+  border-radius:10px;
+  font-size:15px;
+}
+button{
+  border:none;
+  cursor:pointer;
+  background:#2563eb;
+  color:white;
+}
+.correct{background:#16a34a;}
+.incorrect{background:#dc2626;}
+.dice{
+  display:flex;
+  justify-content:center;
+  gap:40px;
+  margin:15px;
+}
+.die{
+  width:85px;
+  height:85px;
+  border-radius:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:36px;
+  font-weight:bold;
+  color:white;
+}
+.red{background:#ef4444;}
+.green{background:#22c55e;}
+.question{
+  font-size:30px;
+  font-weight:bold;
+  margin:15px;
+}
+.answer{
+  font-size:24px;
+  color:#16a34a;
+  font-weight:bold;
+}
+.board{
+  position:relative;
+  width:760px;
+  height:760px;
+  margin:30px auto;
+  border-radius:50%;
+  background:#dbeafe;
+}
+.space{
+  position:absolute;
+  width:88px;
+  height:58px;
+  border:2px solid #334155;
+  border-radius:12px;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:bold;
+  transform:translate(-50%,-50%);
+  padding:2px;
+}
+.safe{border-color:#16a34a;background:#dcfce7;}
+.risky{border-color:#ca8a04;background:#fef9c3;}
+.danger{border-color:#dc2626;background:#fee2e2;}
+.special{border-color:#7c3aed;background:#ede9fe;}
+.finish{border-color:#111827;background:#bbf7d0;}
+.current-space{
+  outline:4px solid #facc15;
+}
+.token{
+  position:absolute;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:#facc15;
+  border:2px solid black;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  transform:translate(-50%,-50%);
+  z-index:10;
+}
+.centre{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:white;
+  border:4px solid #1e3a8a;
+  border-radius:30px;
+  padding:24px;
+  width:300px;
+}
+.legend{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.legend span{
+  padding:7px 10px;
+  border-radius:10px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h1>🎲 R & G Substitution Race</h1>
+
+<input id="teamInput" placeholder="Team name">
+<button onclick="addTeam()">Add Team</button>
+<button onclick="resetGame()">Reset</button>
+
+<h2 id="turnText">Current Team: None</h2>
+
+<div class="dice">
+  <div class="die red" id="redDie">R</div>
+  <div class="die green" id="greenDie">G</div>
+</div>
+
+<div class="question" id="question">Press Roll Dice</div>
+<div class="answer" id="answer"></div>
+
+<button onclick="rollDice()">🎲 Roll Dice</button>
+<button onclick="showAnswer()">Reveal Answer</button>
+<button class="correct" onclick="correctAnswer()">✔ Correct and Move</button>
+<button class="incorrect" onclick="nextTurn()">✖ Incorrect</button>
+
+<div class="legend">
+  <span class="safe">Safe</span>
+  <span class="risky">Risky</span>
+  <span class="danger">Danger</span>
+  <span class="special">Special</span>
+</div>
+
+<div class="board" id="board">
+  <div class="centre">
+    <h2>Rules</h2>
+    <p>Roll the red die for R.</p>
+    <p>Roll the green die for G.</p>
+    <p>Substitute into your space.</p>
+    <p>The answer is your movement.</p>
+    <p>Negative answers move backwards.</p>
+    <p>You must land exactly on finish.</p>
+  </div>
+</div>
+
+</div>
+
+<script>
+let teams = [];
+let currentTeam = 0;
+let redValue = 0;
+let greenValue = 0;
+let currentAnswer = 0;
+let moveAmount = 0;
+let rolled = false;
+
+const spaces = [
+  { text:"START", type:"safe", calc:(r,g)=>r+g },
+  { text:"R + G", type:"safe", calc:(r,g)=>r+g },
+  { text:"RG", type:"safe", calc:(r,g)=>r*g },
+  { text:"R²", type:"safe", calc:(r,g)=>r*r },
+  { text:"G²", type:"safe", calc:(r,g)=>g*g },
+  { text:"R - G", type:"risky", calc:(r,g)=>r-g },
+  { text:"G - R", type:"risky", calc:(r,g)=>g-r },
+  { text:"2R", type:"safe", calc:(r,g)=>2*r },
+  { text:"⭐ Roll Again", type:"special", special:"rollAgain" },
+  { text:"R + 2G", type:"safe", calc:(r,g)=>r+2*g },
+  { text:"2R + G", type:"safe", calc:(r,g)=>2*r+g },
+  { text:"R² + G", type:"safe", calc:(r,g)=>r*r+g },
+  { text:"G² + R", type:"safe", calc:(r,g)=>g*g+r },
+  { text:"2R - G", type:"risky", calc:(r,g)=>2*r-g },
+  { text:"2G - R", type:"risky", calc:(r,g)=>2*g-r },
+  { text:"RG + R", type:"safe", calc:(r,g)=>r*g+r },
+  { text:"🔄 Swap", type:"special", special:"swap" },
+  { text:"R - 2G", type:"danger", calc:(r,g)=>r-2*g },
+  { text:"G - 2R", type:"danger", calc:(r,g)=>g-2*r },
+  { text:"2RG", type:"safe", calc:(r,g)=>2*r*g },
+  { text:"R² + G²", type:"safe", calc:(r,g)=>r*r+g*g },
+  { text:"RG - R²", type:"danger", calc:(r,g)=>r*g-r*r },
+  { text:"RG - G²", type:"danger", calc:(r,g)=>r*g-g*g },
+  { text:"R² - RG", type:"risky", calc:(r,g)=>r*r-r*g },
+  { text:"🚀 Double", type:"special", special:"double" },
+  { text:"3R + G", type:"safe", calc:(r,g)=>3*r+g },
+  { text:"3G + R", type:"safe", calc:(r,g)=>3*g+r },
+  { text:"3R - 2G", type:"risky", calc:(r,g)=>3*r-2*g },
+  { text:"3G - 2R", type:"risky", calc:(r,g)=>3*g-2*r },
+  { text:"R² + 2G", type:"safe", calc:(r,g)=>r*r+2*g },
+  { text:"G² + 2R", type:"safe", calc:(r,g)=>g*g+2*r },
+  { text:"R - G²", type:"danger", calc:(r,g)=>r-g*g },
+  { text:"G - R²", type:"danger", calc:(r,g)=>g-r*r },
+  { text:"2R² + G", type:"safe", calc:(r,g)=>2*r*r+g },
+  { text:"🛑 Miss Turn", type:"special", special:"missTurn" },
+  { text:"🏁 FINISH", type:"finish" }
+];
+
+const finishLine = spaces.length - 1;
+
+function addTeam(){
+  const name = document.getElementById("teamInput").value.trim();
+  if(name === "") return;
+
+  teams.push({
+    name:name,
+    position:0,
+    skip:false
+  });
+
+  document.getElementById("teamInput").value = "";
+  updateTurn();
+  renderBoard();
+}
+
+function rollDice(){
+  if(teams.length === 0) return;
+
+  if(teams[currentTeam].skip){
+    document.getElementById("question").innerHTML =
+      teams[currentTeam].name + " misses this turn!";
+    teams[currentTeam].skip = false;
+    return;
+  }
+
+  redValue = Math.floor(Math.random()*6)+1;
+  greenValue = Math.floor(Math.random()*6)+1;
+  rolled = true;
+
+  document.getElementById("redDie").innerText = redValue;
+  document.getElementById("greenDie").innerText = greenValue;
+
+  const team = teams[currentTeam];
+  const space = spaces[team.position];
+
+  if(space.special){
+    handleSpecial(space.special);
+    return;
+  }
+
+  currentAnswer = space.calc(redValue, greenValue);
+  moveAmount = currentAnswer;
+
+  document.getElementById("question").innerHTML =
+    `${team.name} landed on: ${space.text}`;
+
+  document.getElementById("answer").innerHTML = "";
+}
+
+function showAnswer(){
+  if(!rolled) return;
+
+  document.getElementById("answer").innerHTML =
+    `Answer = ${currentAnswer}. Move ${moveAmount} space(s).`;
+}
+
+function correctAnswer(){
+  if(teams.length === 0 || !rolled) return;
+
+  let team = teams[currentTeam];
+  let newPosition = team.position + moveAmount;
+
+  if(newPosition < 0){
+    newPosition = 0;
+  }
+
+  if(newPosition > finishLine){
+    const extra = newPosition - finishLine;
+    newPosition = finishLine - extra;
+  }
+
+  team.position = newPosition;
+  renderBoard();
+
+  if(team.position === finishLine){
+    alert(team.name + " wins!");
+    return;
+  }
+
+  nextTurn();
+}
+
+function nextTurn(){
+  if(teams.length === 0) return;
+
+  rolled = false;
+  currentAnswer = 0;
+  moveAmount = 0;
+
+  currentTeam = (currentTeam + 1) % teams.length;
+
+  document.getElementById("question").innerHTML = "Press Roll Dice";
+  document.getElementById("answer").innerHTML = "";
+
+  updateTurn();
+  renderBoard();
+}
+
+function handleSpecial(type){
+  const team = teams[currentTeam];
+
+  if(type === "rollAgain"){
+    currentAnswer = 0;
+    moveAmount = 0;
+    document.getElementById("question").innerHTML =
+      "⭐ Roll again! Take another turn.";
+    document.getElementById("answer").innerHTML = "";
+    rolled = false;
+  }
+
+  if(type === "swap"){
+    if(teams.length > 1){
+      let leaderIndex = 0;
+      for(let i=1;i<teams.length;i++){
+        if(teams[i].position > teams[leaderIndex].position){
+          leaderIndex = i;
+        }
+      }
+      const temp = team.position;
+      team.position = teams[leaderIndex].position;
+      teams[leaderIndex].position = temp;
+
+      document.getElementById("question").innerHTML =
+        "🔄 Swap! " + team.name + " swaps with the current leader.";
+    }else{
+      document.getElementById("question").innerHTML =
+        "🔄 Swap space, but there is no one to swap with.";
+    }
+    renderBoard();
+    rolled = false;
+  }
+
+  if(type === "double"){
+    currentAnswer = redValue + greenValue;
+    moveAmount = currentAnswer * 2;
+
+    document.getElementById("question").innerHTML =
+      "🚀 Double Movement: 2 × (R + G)";
+    document.getElementById("answer").innerHTML = "";
+  }
+
+  if(type === "missTurn"){
+    team.skip = true;
+    document.getElementById("question").innerHTML =
+      "🛑 Miss a turn next round!";
+    rolled = false;
+  }
+}
+
+function updateTurn(){
+  if(teams.length === 0){
+    document.getElementById("turnText").innerHTML = "Current Team: None";
+  }else{
+    document.getElementById("turnText").innerHTML =
+      "Current Team: " + teams[currentTeam].name;
+  }
+}
+
+function renderBoard(){
+  const board = document.getElementById("board");
+  board.querySelectorAll(".space,.token").forEach(e => e.remove());
+
+  const centreX = 380;
+  const centreY = 380;
+  const radius = 320;
+
+  spaces.forEach((space,index)=>{
+    const angle = (2 * Math.PI * index / spaces.length) - Math.PI/2;
+    const x = centreX + radius * Math.cos(angle);
+    const y = centreY + radius * Math.sin(angle);
+
+    const tile = document.createElement("div");
+    tile.className = "space " + space.type;
+    tile.innerHTML = space.text;
+
+    if(teams[currentTeam] && teams[currentTeam].position === index){
+      tile.classList.add("current-space");
+    }
+
+    tile.style.left = x + "px";
+    tile.style.top = y + "px";
+
+    board.appendChild(tile);
+  });
+
+  teams.forEach((team,index)=>{
+    const angle = (2 * Math.PI * team.position / spaces.length) - Math.PI/2;
+    const tokenRadius = 245 + index * 20;
+    const x = centreX + tokenRadius * Math.cos(angle);
+    const y = centreY + tokenRadius * Math.sin(angle);
+
+    const token = document.createElement("div");
+    token.className = "token";
+    token.innerHTML = team.name.charAt(0).toUpperCase();
+
+    token.style.left = x + "px";
+    token.style.top = y + "px";
+
+    board.appendChild(token);
+  });
+}
+
+function resetGame(){
+  teams = [];
+  currentTeam = 0;
+  redValue = 0;
+  greenValue = 0;
+  currentAnswer = 0;
+  moveAmount = 0;
+  rolled = false;
+
+  document.getElementById("redDie").innerText = "R";
+  document.getElementById("greenDie").innerText = "G";
+  document.getElementById("question").innerHTML = "Press Roll Dice";
+  document.getElementById("answer").innerHTML = "";
+  document.getElementById("turnText").innerHTML = "Current Team: None";
+
+  renderBoard();
+}
+
+renderBoard();
+</script>
+
+</body>
+</html>

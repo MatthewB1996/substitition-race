@@ -49,7 +49,6 @@ button{
   height:52px;
   border:3px solid #334155;
   border-radius:14px;
-  background:white;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -58,13 +57,15 @@ button{
   transform:translate(-50%,-50%);
 }
 
+.start{background:#bfdbfe;border-color:#1d4ed8;}
+.finish{background:#bbf7d0;border-color:#111827;}
 .safe{background:#dcfce7;border-color:#16a34a;}
 .risky{background:#fef9c3;border-color:#ca8a04;}
 .danger{background:#fee2e2;border-color:#dc2626;}
-.finish{background:#bbf7d0;border-color:#111827;}
-.start{background:#bfdbfe;border-color:#1d4ed8;}
 
-.current-space{outline:5px solid #facc15;}
+.current-space{
+  outline:5px solid #facc15;
+}
 
 .token{
   position:absolute;
@@ -91,6 +92,22 @@ button{
   border-radius:28px;
   padding:22px;
   width:390px;
+}
+
+.panel{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:12px;
+}
+
+.box{
+  background:white;
+  border:2px solid #93a4c7;
+  border-radius:14px;
+  padding:12px;
+  min-width:220px;
 }
 
 .dice-row{
@@ -121,30 +138,8 @@ button{
   margin:8px;
 }
 
-.answer{
-  color:#16a34a;
-}
-
-.panel{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:12px;
-  margin-top:12px;
-}
-
-.box{
-  background:white;
-  border:2px solid #93a4c7;
-  border-radius:14px;
-  padding:12px;
-  min-width:220px;
-}
-
-.team-list{
-  text-align:left;
-  font-weight:bold;
-}
+.answer{color:#16a34a;}
+.team-list{text-align:left;font-weight:bold;}
 </style>
 </head>
 
@@ -212,6 +207,7 @@ let rolled = false;
 
 const spaces = [
   { text:"START", type:"start", calc:(r,g)=>r+g },
+
   { text:"R + G", type:"safe", calc:(r,g)=>r+g },
   { text:"RG", type:"safe", calc:(r,g)=>r*g },
   { text:"R²", type:"safe", calc:(r,g)=>r*r },
@@ -249,30 +245,68 @@ const spaces = [
   { text:"G - R²", type:"danger", calc:(r,g)=>g-r*r },
   { text:"2R² + G", type:"safe", calc:(r,g)=>2*r*r+g },
   { text:"2G² + R", type:"safe", calc:(r,g)=>2*g*g+r },
-  { text:"🏁 FINISH", type:"finish" }
+
+  { text:"🏁 FINISH", type:"finish", calc:(r,g)=>0 }
 ];
 
 const finishLine = spaces.length - 1;
 
 const positions = [
   [90,70],
-  [205,70],[320,70],[435,70],[550,70],[665,70],[780,70],[895,70],[1010,70],
+  [205,70],
+  [320,70],
+  [435,70],
+  [550,70],
+  [665,70],
+  [780,70],
+  [895,70],
+  [1010,70],
 
-  [1010,145],[1010,220],[1010,295],[1010,370],[1010,445],[1010,520],[1010,595],[1010,670],
+  [1010,145],
+  [1010,220],
+  [1010,295],
+  [1010,370],
+  [1010,445],
+  [1010,520],
+  [1010,595],
+  [1010,670],
 
-  [895,710],[780,710],[665,710],[550,710],[435,710],[320,710],[205,710],[90,710],
+  [1010,710],
+  [895,710],
+  [780,710],
+  [665,710],
+  [550,710],
+  [435,710],
+  [320,710],
+  [205,710],
+  [90,710],
 
-  [90,645],[90,580],[90,515],[90,450],[90,385],[90,320],[90,255],[90,190],[90,125],
+  [90,645],
+  [90,580],
+  [90,515],
+  [90,450],
+  [90,385],
+  [90,320],
+  [90,255],
+  [90,220],
+  [90,185],
 
   [90,145]
 ];
 
 function addTeam(){
-  const name = document.getElementById("teamInput").value.trim();
+  const input = document.getElementById("teamInput");
+  const name = input.value.trim();
+
   if(name === "") return;
 
-  teams.push({name:name, position:0});
-  document.getElementById("teamInput").value = "";
+  teams.push({
+    name:name,
+    position:0
+  });
+
+  input.value = "";
+  currentTeam = teams.length === 1 ? 0 : currentTeam;
 
   updateTurn();
   renderBoard();
@@ -325,6 +359,7 @@ function correctAnswer(){
   }
 
   team.position = newPosition;
+
   renderBoard();
 
   if(team.position === finishLine){
@@ -358,6 +393,7 @@ function updateTurn(){
 
 function renderBoard(){
   const board = document.getElementById("board");
+
   board.querySelectorAll(".space,.token").forEach(e => e.remove());
 
   spaces.forEach((space,index)=>{
@@ -382,7 +418,7 @@ function renderBoard(){
     token.className = "token";
     token.innerHTML = team.name.charAt(0).toUpperCase();
 
-    token.style.left = (pos[0] + 36 + index * 10) + "px";
+    token.style.left = (pos[0] + 34 + index * 10) + "px";
     token.style.top = (pos[1] + 28 + index * 5) + "px";
 
     board.appendChild(token);
@@ -400,7 +436,7 @@ function renderTeamList(){
   }
 
   list.innerHTML = teams.map(team =>
-    `${team.name}: Space ${team.position}`
+    `🟡 ${team.name}: Space ${team.position}`
   ).join("<br>");
 }
 

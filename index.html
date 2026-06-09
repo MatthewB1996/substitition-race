@@ -12,17 +12,16 @@ body{
   text-align:center;
   padding:18px;
 }
-.card{
-  max-width:1200px;
-  margin:auto;
-}
+
 h1{color:#15306b;}
-button,input{
+
+input,button{
   padding:10px 14px;
   margin:5px;
   border-radius:10px;
   font-size:15px;
 }
+
 button{
   border:none;
   color:white;
@@ -30,8 +29,10 @@ button{
   cursor:pointer;
   font-weight:bold;
 }
+
 .correct{background:#16a34a;}
 .incorrect{background:#dc2626;}
+
 .board{
   position:relative;
   width:1100px;
@@ -41,6 +42,7 @@ button{
   border-radius:40px;
   overflow:hidden;
 }
+
 .space{
   position:absolute;
   width:96px;
@@ -55,11 +57,15 @@ button{
   font-weight:bold;
   transform:translate(-50%,-50%);
 }
+
 .safe{background:#dcfce7;border-color:#16a34a;}
 .risky{background:#fef9c3;border-color:#ca8a04;}
 .danger{background:#fee2e2;border-color:#dc2626;}
 .finish{background:#bbf7d0;border-color:#111827;}
+.start{background:#bfdbfe;border-color:#1d4ed8;}
+
 .current-space{outline:5px solid #facc15;}
+
 .token{
   position:absolute;
   width:34px;
@@ -74,6 +80,7 @@ button{
   transform:translate(-50%,-50%);
   z-index:20;
 }
+
 .centre{
   position:absolute;
   top:50%;
@@ -82,15 +89,17 @@ button{
   background:white;
   border:5px solid #1e3a8a;
   border-radius:28px;
-  padding:25px;
-  width:360px;
+  padding:22px;
+  width:390px;
 }
+
 .dice-row{
   display:flex;
   justify-content:center;
   gap:35px;
   margin:12px;
 }
+
 .die{
   width:80px;
   height:80px;
@@ -102,16 +111,20 @@ button{
   font-size:36px;
   font-weight:bold;
 }
+
 .red{background:#ef4444;}
 .green{background:#22c55e;}
+
 .info{
   font-size:22px;
   font-weight:bold;
   margin:8px;
 }
+
 .answer{
   color:#16a34a;
 }
+
 .panel{
   display:flex;
   justify-content:center;
@@ -119,6 +132,7 @@ button{
   gap:12px;
   margin-top:12px;
 }
+
 .box{
   background:white;
   border:2px solid #93a4c7;
@@ -126,6 +140,7 @@ button{
   padding:12px;
   min-width:220px;
 }
+
 .team-list{
   text-align:left;
   font-weight:bold;
@@ -134,8 +149,6 @@ button{
 </head>
 
 <body>
-
-<div class="card">
 
 <h1>🎲 R & G Substitution Race</h1>
 
@@ -188,8 +201,6 @@ button{
 <button class="correct" onclick="correctAnswer()">✔ Correct and Move</button>
 <button class="incorrect" onclick="nextTurn()">✖ Incorrect / Next Turn</button>
 
-</div>
-
 <script>
 let teams = [];
 let currentTeam = 0;
@@ -200,7 +211,7 @@ let moveAmount = 0;
 let rolled = false;
 
 const spaces = [
-  { text:"START", type:"safe", calc:(r,g)=>r+g },
+  { text:"START", type:"start", calc:(r,g)=>r+g },
   { text:"R + G", type:"safe", calc:(r,g)=>r+g },
   { text:"RG", type:"safe", calc:(r,g)=>r*g },
   { text:"R²", type:"safe", calc:(r,g)=>r*r },
@@ -209,24 +220,27 @@ const spaces = [
   { text:"G - R", type:"risky", calc:(r,g)=>g-r },
   { text:"2R", type:"safe", calc:(r,g)=>2*r },
   { text:"2G", type:"safe", calc:(r,g)=>2*g },
+
   { text:"R + 2G", type:"safe", calc:(r,g)=>r+2*g },
   { text:"2R + G", type:"safe", calc:(r,g)=>2*r+g },
   { text:"R² + G", type:"safe", calc:(r,g)=>r*r+g },
   { text:"G² + R", type:"safe", calc:(r,g)=>g*g+r },
   { text:"2R - G", type:"risky", calc:(r,g)=>2*r-g },
   { text:"2G - R", type:"risky", calc:(r,g)=>2*g-r },
-  { text:"RG + R", type:"safe", calc:(r,g)=>r*g+r },
+  { text:"4R + G", type:"safe", calc:(r,g)=>4*r+g },
   { text:"RG + G", type:"safe", calc:(r,g)=>r*g+g },
+
   { text:"R - 2G", type:"danger", calc:(r,g)=>r-2*g },
   { text:"G - 2R", type:"danger", calc:(r,g)=>g-2*r },
-  { text:"2RG", type:"safe", calc:(r,g)=>2*r*g },
   { text:"R² + G²", type:"safe", calc:(r,g)=>r*r+g*g },
+  { text:"2RG", type:"safe", calc:(r,g)=>2*r*g },
   { text:"RG - R²", type:"danger", calc:(r,g)=>r*g-r*r },
   { text:"RG - G²", type:"danger", calc:(r,g)=>r*g-g*g },
   { text:"R² - RG", type:"risky", calc:(r,g)=>r*r-r*g },
   { text:"G² - RG", type:"risky", calc:(r,g)=>g*g-r*g },
   { text:"3R + G", type:"safe", calc:(r,g)=>3*r+g },
   { text:"3G + R", type:"safe", calc:(r,g)=>3*g+r },
+
   { text:"3R - 2G", type:"risky", calc:(r,g)=>3*r-2*g },
   { text:"3G - 2R", type:"risky", calc:(r,g)=>3*g-2*r },
   { text:"R² + 2G", type:"safe", calc:(r,g)=>r*r+2*g },
@@ -241,11 +255,16 @@ const spaces = [
 const finishLine = spaces.length - 1;
 
 const positions = [
-  [90,70],[205,70],[320,70],[435,70],[550,70],[665,70],[780,70],[895,70],[1010,70],
+  [90,70],
+  [205,70],[320,70],[435,70],[550,70],[665,70],[780,70],[895,70],[1010,70],
+
   [1010,145],[1010,220],[1010,295],[1010,370],[1010,445],[1010,520],[1010,595],[1010,670],
+
   [895,710],[780,710],[665,710],[550,710],[435,710],[320,710],[205,710],[90,710],
+
   [90,645],[90,580],[90,515],[90,450],[90,385],[90,320],[90,255],[90,190],[90,125],
-  [205,125],[320,125]
+
+  [90,145]
 ];
 
 function addTeam(){
@@ -284,7 +303,7 @@ function rollDice(){
 function showAnswer(){
   if(!rolled) return;
 
-  let direction = moveAmount >= 0 ? "forward" : "backward";
+  const direction = moveAmount >= 0 ? "clockwise" : "backwards";
 
   document.getElementById("answer").innerHTML =
     `Answer = ${currentAnswer}<br>Move ${Math.abs(moveAmount)} spaces ${direction}`;
@@ -333,11 +352,8 @@ function nextTurn(){
 }
 
 function updateTurn(){
-  if(teams.length === 0){
-    document.getElementById("turnText").innerHTML = "None";
-  }else{
-    document.getElementById("turnText").innerHTML = teams[currentTeam].name;
-  }
+  document.getElementById("turnText").innerHTML =
+    teams.length === 0 ? "None" : teams[currentTeam].name;
 }
 
 function renderBoard(){

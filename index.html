@@ -224,8 +224,8 @@ const spaces = [
   { text:"2R - G", type:"risky", calc:(r,g)=>2*r-g },
   { text:"2G - R", type:"risky", calc:(r,g)=>2*g-r },
   { text:"4R + G", type:"safe", calc:(r,g)=>4*r+g },
-  { text:"RG + G", type:"safe", calc:(r,g)=>r*g+g },
 
+  { text:"RG + G", type:"safe", calc:(r,g)=>r*g+g },
   { text:"R - 2G", type:"danger", calc:(r,g)=>r-2*g },
   { text:"G - 2R", type:"danger", calc:(r,g)=>g-2*r },
   { text:"R² + G²", type:"safe", calc:(r,g)=>r*r+g*g },
@@ -233,18 +233,14 @@ const spaces = [
   { text:"RG - R²", type:"danger", calc:(r,g)=>r*g-r*r },
   { text:"RG - G²", type:"danger", calc:(r,g)=>r*g-g*g },
   { text:"R² - RG", type:"risky", calc:(r,g)=>r*r-r*g },
+
   { text:"G² - RG", type:"risky", calc:(r,g)=>g*g-r*g },
   { text:"3R + G", type:"safe", calc:(r,g)=>3*r+g },
   { text:"3G + R", type:"safe", calc:(r,g)=>3*g+r },
-
   { text:"3R - 2G", type:"risky", calc:(r,g)=>3*r-2*g },
   { text:"3G - 2R", type:"risky", calc:(r,g)=>3*g-2*r },
-  { text:"R² + 2G", type:"safe", calc:(r,g)=>r*r+2*g },
-  { text:"G² + 2R", type:"safe", calc:(r,g)=>g*g+2*r },
   { text:"R - G²", type:"danger", calc:(r,g)=>r-g*g },
   { text:"G - R²", type:"danger", calc:(r,g)=>g-r*r },
-  { text:"2R² + G", type:"safe", calc:(r,g)=>2*r*r+g },
-  { text:"2G² + R", type:"safe", calc:(r,g)=>2*g*g+r },
 
   { text:"🏁 FINISH", type:"finish", calc:(r,g)=>0 }
 ];
@@ -253,6 +249,7 @@ const finishLine = spaces.length - 1;
 
 const positions = [
   [90,70],
+
   [205,70],
   [320,70],
   [435,70],
@@ -269,7 +266,6 @@ const positions = [
   [1010,445],
   [1010,520],
   [1010,595],
-  [1010,670],
 
   [1010,710],
   [895,710],
@@ -279,17 +275,14 @@ const positions = [
   [435,710],
   [320,710],
   [205,710],
-  [90,710],
 
-  [90,645],
-  [90,580],
-  [90,515],
-  [90,450],
-  [90,385],
-  [90,320],
-  [90,255],
-  [90,220],
-  [90,185],
+  [90,710],
+  [90,635],
+  [90,560],
+  [90,485],
+  [90,410],
+  [90,335],
+  [90,260],
 
   [90,145]
 ];
@@ -306,7 +299,6 @@ function addTeam(){
   });
 
   input.value = "";
-  currentTeam = teams.length === 1 ? 0 : currentTeam;
 
   updateTurn();
   renderBoard();
@@ -436,7 +428,7 @@ function renderTeamList(){
   }
 
   list.innerHTML = teams.map(team =>
-    `🟡 ${team.name}: Space ${team.position}`
+    `🟡 ${team.name}: ${spaces[team.position].text}`
   ).join("<br>");
 }
 

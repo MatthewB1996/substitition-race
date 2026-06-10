@@ -30,7 +30,6 @@ button{
   font-weight:bold;
 }
 
-.correct{background:#16a34a;}
 .incorrect{background:#dc2626;}
 
 .board{
@@ -139,7 +138,13 @@ button{
 }
 
 .answer{color:#16a34a;}
+.wrong{color:#dc2626;}
 .team-list{text-align:left;font-weight:bold;}
+
+#studentAnswer{
+  width:150px;
+  text-align:center;
+}
 </style>
 </head>
 
@@ -157,7 +162,8 @@ button{
     <p>Roll the red die for <b>R</b>.</p>
     <p>Roll the green die for <b>G</b>.</p>
     <p>Substitute into your space.</p>
-    <p>The answer is your movement.</p>
+    <p>Type your answer.</p>
+    <p>Correct answer = movement.</p>
     <p>Negative answers move backwards.</p>
     <p>You must land exactly on finish.</p>
   </div>
@@ -180,6 +186,10 @@ button{
   <div class="box">
     <h3>Question</h3>
     <div class="info" id="question">Press Roll Dice</div>
+    <input id="studentAnswer" type="number" placeholder="Answer">
+    <br>
+    <button onclick="checkAnswer()">Submit Answer</button>
+    <button onclick="showAnswer()">Reveal Answer</button>
     <div class="info answer" id="answer"></div>
   </div>
 
@@ -192,9 +202,7 @@ button{
 <br>
 
 <button onclick="rollDice()">🎲 Roll Dice</button>
-<button onclick="showAnswer()">👁 Reveal Answer</button>
-<button class="correct" onclick="correctAnswer()">✔ Correct and Move</button>
-<button class="incorrect" onclick="nextTurn()">✖ Incorrect / Next Turn</button>
+<button class="incorrect" onclick="nextTurn()">Skip / Next Turn</button>
 
 <script>
 let teams = [];
@@ -323,7 +331,37 @@ function rollDice(){
   document.getElementById("question").innerHTML =
     `${team.name}: ${space.text}`;
 
+  document.getElementById("answer").className = "info answer";
   document.getElementById("answer").innerHTML = "";
+  document.getElementById("studentAnswer").value = "";
+  document.getElementById("studentAnswer").focus();
+}
+
+function checkAnswer(){
+  if(!rolled) return;
+
+  const answerBox = document.getElementById("studentAnswer");
+  const studentAnswer = Number(answerBox.value);
+
+  if(answerBox.value.trim() === ""){
+    document.getElementById("answer").className = "info wrong";
+    document.getElementById("answer").innerHTML = "Type an answer first.";
+    return;
+  }
+
+  if(studentAnswer === currentAnswer){
+    document.getElementById("answer").className = "info answer";
+    document.getElementById("answer").innerHTML =
+      `✅ Correct! Moving ${Math.abs(moveAmount)} space(s).`;
+
+    setTimeout(movePlayer, 900);
+  } else {
+    document.getElementById("answer").className = "info wrong";
+    document.getElementById("answer").innerHTML =
+      `❌ Incorrect. Correct answer was ${currentAnswer}.`;
+
+    setTimeout(nextTurn, 1800);
+  }
 }
 
 function showAnswer(){
@@ -331,11 +369,12 @@ function showAnswer(){
 
   const direction = moveAmount >= 0 ? "clockwise" : "backwards";
 
+  document.getElementById("answer").className = "info answer";
   document.getElementById("answer").innerHTML =
     `Answer = ${currentAnswer}<br>Move ${Math.abs(moveAmount)} spaces ${direction}`;
 }
 
-function correctAnswer(){
+function movePlayer(){
   if(teams.length === 0 || !rolled) return;
 
   let team = teams[currentTeam];
@@ -356,6 +395,7 @@ function correctAnswer(){
 
   if(team.position === finishLine){
     alert(team.name + " wins!");
+    rolled = false;
     return;
   }
 
@@ -372,7 +412,9 @@ function nextTurn(){
   currentTeam = (currentTeam + 1) % teams.length;
 
   document.getElementById("question").innerHTML = "Press Roll Dice";
+  document.getElementById("answer").className = "info answer";
   document.getElementById("answer").innerHTML = "";
+  document.getElementById("studentAnswer").value = "";
 
   updateTurn();
   renderBoard();
@@ -446,9 +488,17 @@ function resetGame(){
   document.getElementById("question").innerHTML = "Press Roll Dice";
   document.getElementById("answer").innerHTML = "";
   document.getElementById("turnText").innerHTML = "None";
+  document.getElementById("teamList").innerHTML = "No teams yet";
+  document.getElementById("studentAnswer").value = "";
 
   renderBoard();
 }
+
+document.getElementById("studentAnswer").addEventListener("keydown", function(event){
+  if(event.key === "Enter"){
+    checkAnswer();
+  }
+});
 
 renderBoard();
 </script>
